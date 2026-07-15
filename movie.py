@@ -5,7 +5,24 @@ import random
 # Load dataset
 movies = pd.read_csv("movies.csv")
 
+st.set_page_config(
+    page_title="Movie Recommendation System",
+    page_icon="🎬",
+    layout="wide"
+)
+
 st.title("🎬 Movie Recommendation System")
+
+st.markdown(
+    "Find your next favorite movie based on genre, language, and release year."
+)
+
+# 👇 ADD THIS HERE
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Movies", len(movies))
+col2.metric("Genres", movies["Genre"].nunique())
+col3.metric("Languages", movies["Language"].nunique())
 
 # Language
 language = st.selectbox(
@@ -80,16 +97,30 @@ if st.button("🎬 Recommend Movies"):
             )
 
         for _, row in recommendations.iterrows():
-            st.markdown(f"""
-### 🎬 {row['Movie']}
 
-⭐ IMDb: **{row['IMDb_Rating']}**
+    with st.container():
 
-📅 Year: **{row['Year']}**
+        st.markdown(
+        f"""
+        <div style="
+            border:2px solid #444;
+            border-radius:15px;
+            padding:20px;
+            margin-bottom:20px;
+            background-color:#1f1f1f;
+        ">
 
-🎭 Genre: **{row['Genre']}**
+        <h2>🎬 {row['Movie']}</h2>
 
-🌍 Language: **{row['Language']}**
+        ⭐ <b>IMDb Rating:</b> {row['IMDb_Rating']}<br>
 
----
-""")
+        📅 <b>Release Year:</b> {row['Year']}<br>
+
+        🎭 <b>Genre:</b> {row['Genre']}<br>
+
+        🌍 <b>Language:</b> {row['Language']}
+
+        </div>
+        """,
+        unsafe_allow_html=True
+        )

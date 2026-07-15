@@ -1,15 +1,59 @@
 import streamlit as st
+import pandas as pd
 import random
 
-movies = {
-    "Action": ["John Wick", "Avengers", "Mad Max"],
-    "Comedy": ["3 Idiots", "Free Guy", "The Hangover"],
-    "Sci-Fi": ["Interstellar", "The Matrix", "Inception"]
-}
+# Load dataset
+movies = pd.read_csv("movies.csv")
 
 st.title("🎬 Movie Recommendation System")
 
-genre = st.selectbox("Choose a genre", list(movies.keys()))
+# Language
+language = st.selectbox(
+    "Choose Language",
+    sorted(movies["Language"].unique())
+)
 
-if st.button("Recommend"):
-    st.success(random.choice(movies[genre]))
+# Genre
+genre = st.selectbox(
+    "Choose Genre",
+    sorted(movies["Genre"].unique())
+)
+
+# Year
+start_year, end_year = st.slider(
+    "Choose Release Year",
+    1950,
+    2025,
+    (1990, 2025)
+)
+
+# Number of movies
+num_movies = st.slider(
+    "Number of Recommendations",
+    1,
+    10,
+    5
+)
+
+# Filter movies
+filtered = movies[
+    (movies["Language"] == language) &
+    (movies["Genre"] == genre) &
+    (movies["Year"] >= start_year) &
+    (movies["Year"] <= end_year)
+]
+
+# Recommend button
+if st.button("🎥 Recommend Movies"):
+
+    if filtered.empty:
+        st.warning("No movies found.")
+    else:
+        recommendations = filtered.sample(
+            min(num_movies, len(filtered))
+        )
+
+        st.success("Recommended Movies")
+
+        for _, row in recommendations.iterrows():
+            st.write(f"🎬 **{row['Movie']}** ({row['Year']})")

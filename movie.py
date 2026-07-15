@@ -56,4 +56,17 @@ if st.button("🎥 Recommend Movies"):
         st.success("Recommended Movies")
 
         for _, row in recommendations.iterrows():
-            st.write(f"🎬 **{row['Movie']}** ({row['Year']})")
+            st.markdown(
+    f"""
+### 🎬 {row['Movie']}
+📅 **Year:** {row['Year']}
+
+🎭 **Genre:** {row['Genre']}
+
+🌍 **Language:** {row['Language']}
+
+⭐ **IMDb Rating:** {row['IMDb_Rating']}
+
+---
+"""
+)

@@ -44,29 +44,52 @@ filtered = movies[
 ]
 
 # Recommend button
-if st.button("🎥 Recommend Movies"):
+sort_option = st.selectbox(
+    "Sort By",
+    ["Highest Rated", "Newest", "Random"]
+)
+
+if st.button("🎬 Recommend Movies"):
+
+    filtered = movies[
+        (movies["Language"] == language) &
+        (movies["Genre"] == genre) &
+        (movies["Year"] >= start_year) &
+        (movies["Year"] <= end_year)
+    ]
 
     if filtered.empty:
         st.warning("No movies found.")
     else:
-        recommendations = filtered.sample(
-            min(num_movies, len(filtered))
-        )
 
-        st.success("Recommended Movies")
+        if sort_option == "Highest Rated":
+            recommendations = filtered.sort_values(
+                by="IMDb_Rating",
+                ascending=False
+            ).head(num_movies)
+
+        elif sort_option == "Newest":
+            recommendations = filtered.sort_values(
+                by="Year",
+                ascending=False
+            ).head(num_movies)
+
+        else:
+            recommendations = filtered.sample(
+                min(num_movies, len(filtered))
+            )
 
         for _, row in recommendations.iterrows():
-            st.markdown(
-    f"""
+            st.markdown(f"""
 ### 🎬 {row['Movie']}
-📅 **Year:** {row['Year']}
 
-🎭 **Genre:** {row['Genre']}
+⭐ IMDb: **{row['IMDb_Rating']}**
 
-🌍 **Language:** {row['Language']}
+📅 Year: **{row['Year']}**
 
-⭐ **IMDb Rating:** {row['IMDb_Rating']}
+🎭 Genre: **{row['Genre']}**
+
+🌍 Language: **{row['Language']}**
 
 ---
-"""
-)
+""")

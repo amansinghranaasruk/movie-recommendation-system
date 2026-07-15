@@ -96,7 +96,7 @@ if st.button("🎬 Recommend Movies"):
                 min(num_movies, len(filtered))
             )
 
-        for _, row in recommendations.iterrows():
+for _, row in recommendations.iterrows():
 
     with st.container():
 

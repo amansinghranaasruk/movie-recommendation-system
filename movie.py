@@ -11,22 +11,28 @@ st.set_page_config(
 
 # ---------------- LOAD DATA ---------------- #
 
-movies = pd.read_csv("movies.csv")
+try:
+    movies = pd.read_csv("movies.csv")
+except FileNotFoundError:
+    st.error("movies.csv not found!")
+    st.stop()
 
 # ---------------- TITLE ---------------- #
 
 st.title("🎬 Movie Recommendation System")
 
-st.markdown(
-    "Find your next favorite movie based on **Language, Genre, Year and IMDb Rating**."
+st.write(
+    "Find your next favorite movie based on language, genre, year and IMDb rating."
 )
+
+st.divider()
 
 # ---------------- DASHBOARD ---------------- #
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("🎬 Movies", len(movies))
+    st.metric("🎬 Total Movies", len(movies))
 
 with col2:
     st.metric("🎭 Genres", movies["Genre"].nunique())
@@ -55,20 +61,23 @@ st.divider()
 # ---------------- FILTERS ---------------- #
 
 language = st.selectbox(
-    "🌍 Choose Language",
+    "🌍 Select Language",
     sorted(movies["Language"].unique())
 )
 
 genre = st.selectbox(
-    "🎭 Choose Genre",
+    "🎭 Select Genre",
     sorted(movies["Genre"].unique())
 )
 
 start_year, end_year = st.slider(
-    "📅 Release Year",
+    "📅 Select Release Year",
     int(movies["Year"].min()),
     int(movies["Year"].max()),
-    (2000, 2025)
+    (
+        int(movies["Year"].min()),
+        int(movies["Year"].max())
+    )
 )
 
 num_movies = st.slider(
@@ -80,7 +89,11 @@ num_movies = st.slider(
 
 sort_option = st.selectbox(
     "📊 Sort By",
-    ["Highest Rated", "Newest", "Random"]
+    [
+        "Highest Rated",
+        "Newest",
+        "Random"
+    ]
 )
 
 st.divider()
@@ -88,18 +101,21 @@ st.divider()
 # ---------------- SURPRISE ME ---------------- #
 
 if st.button("🎲 Surprise Me"):
-    random_movie = movies.sample(1).iloc[0]
 
-    st.success(f"🎬 {random_movie['Movie']}")
+    movie = movies.sample(1).iloc[0]
 
-    st.write(f"⭐ IMDb Rating: {random_movie['IMDb_Rating']}")
-    st.write(f"📅 Year: {random_movie['Year']}")
-    st.write(f"🎭 Genre: {random_movie['Genre']}")
-    st.write(f"🌍 Language: {random_movie['Language']}")
+    st.success("Here's a random movie for you!")
+
+    st.subheader(movie["Movie"])
+
+    st.write(f"⭐ IMDb Rating: {movie['IMDb_Rating']}")
+    st.write(f"📅 Year: {movie['Year']}")
+    st.write(f"🎭 Genre: {movie['Genre']}")
+    st.write(f"🌍 Language: {movie['Language']}")
 
 st.divider()
 
-# ---------------- RECOMMEND BUTTON ---------------- #
+# ---------------- RECOMMEND ---------------- #
 
 if st.button("🎥 Recommend Movies"):
 
@@ -115,7 +131,7 @@ if st.button("🎥 Recommend Movies"):
 
     if filtered.empty:
 
-        st.warning("No movies found.")
+        st.warning("❌ No movies found. Try changing the filters.")
 
     else:
 
@@ -139,28 +155,22 @@ if st.button("🎥 Recommend Movies"):
                 min(num_movies, len(filtered))
             )
 
-        st.success("Recommended Movies")
+        st.success(f"Found {len(recommendations)} movie(s)!")
 
         for _, row in recommendations.iterrows():
 
-            col1, col2 = st.columns([1, 3])
-
-            with col1:
-                st.image(
-                    "https://placehold.co/250x350?text=Movie+Poster",
-                    width=180
-                )
-
-            with col2:
+            with st.container():
 
                 st.subheader(f"🎬 {row['Movie']}")
 
-                st.write(f"⭐ IMDb Rating : {row['IMDb_Rating']}")
+                c1, c2 = st.columns(2)
 
-                st.write(f"📅 Release Year : {row['Year']}")
+                with c1:
+                    st.write(f"⭐ **IMDb Rating:** {row['IMDb_Rating']}")
+                    st.write(f"📅 **Release Year:** {row['Year']}")
 
-                st.write(f"🎭 Genre : {row['Genre']}")
-
-                st.write(f"🌍 Language : {row['Language']}")
+                with c2:
+                    st.write(f"🎭 **Genre:** {row['Genre']}")
+                    st.write(f"🌍 **Language:** {row['Language']}")
 
                 st.divider()

@@ -2,224 +2,376 @@ import streamlit as st
 import pandas as pd
 import random
 
-# ---------------- PAGE CONFIG ----------------
-
 st.set_page_config(
-    page_title="Movie Recommendation System",
+    page_title="Netflix Style Movie Recommender",
     page_icon="🎬",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# ---------------- CUSTOM CSS ----------------
+# Load data
+movies = pd.read_csv("movies.csv")
+
+# ---------------- CSS ---------------- #
 
 st.markdown("""
 <style>
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+html, body, [class*="css"]{
+    font-family:'Poppins',sans-serif;
+}
+
+/* Background */
 .stApp{
 background:
-linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+linear-gradient(
+135deg,
+#090909,
+#141414,
+#1b1b1b,
+#101820
+);
 color:white;
 }
 
-/* Main title */
-h1{
+/* Hide Streamlit Menu */
+#MainMenu{visibility:hidden;}
+footer{visibility:hidden;}
+header{visibility:hidden;}
+
+/* Hero Banner */
+
+.hero{
+padding:45px;
+border-radius:25px;
+background:
+linear-gradient(
+90deg,
+rgba(229,9,20,.95),
+rgba(20,20,20,.85)
+);
+
+box-shadow:0px 15px 35px rgba(0,0,0,.5);
+margin-bottom:30px;
+animation:fadeIn 1s;
+}
+
+.hero h1{
+font-size:58px;
+font-weight:700;
+margin-bottom:10px;
+color:white;
+}
+
+.hero p{
+font-size:22px;
+color:#f1f1f1;
+}
+
+/* Statistics */
+
+.metric-card{
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(12px);
+
+padding:25px;
+
+border-radius:20px;
+
 text-align:center;
+
+transition:.4s;
+
+border:1px solid rgba(255,255,255,.15);
+
+box-shadow:0px 8px 25px rgba(0,0,0,.4);
+
+}
+
+.metric-card:hover{
+
+transform:translateY(-8px);
+
+background:rgba(255,255,255,.12);
+
+}
+
+/* Search */
+
+.stTextInput input{
+
+background:#202020;
+
+border-radius:12px;
+
+border:1px solid #444;
+
 color:white;
-font-size:52px;
+
 }
 
-/* Subtitle */
-p{
-font-size:18px;
+/* Selectbox */
+
+div[data-baseweb="select"]{
+
+background:#202020;
+
+border-radius:12px;
+
 }
 
-/* Metric Cards */
-[data-testid="metric-container"]{
-background:rgba(255,255,255,0.08);
-border-radius:18px;
-padding:18px;
-border:1px solid rgba(255,255,255,.2);
-box-shadow:0px 5px 20px rgba(0,0,0,.4);
+/* Sliders */
+
+.stSlider{
+
+padding-top:15px;
+
 }
 
 /* Buttons */
+
 .stButton>button{
+
 background:#E50914;
+
 color:white;
+
 border:none;
-border-radius:10px;
-height:55px;
-width:100%;
+
+padding:14px;
+
+border-radius:12px;
+
 font-size:18px;
+
 font-weight:bold;
+
+transition:.4s;
+
+width:100%;
+
 }
 
 .stButton>button:hover{
-background:#ff1f1f;
+
+background:#ff3030;
+
+transform:scale(1.03);
+
 }
 
-/* Select boxes */
-div[data-baseweb="select"]{
-background:#1F2937;
-border-radius:10px;
+/* Movie Card */
+
+.movie-card{
+
+background:#1d1d1d;
+
+padding:25px;
+
+border-radius:18px;
+
+margin-bottom:18px;
+
+box-shadow:0px 8px 25px rgba(0,0,0,.4);
+
+border-left:8px solid #E50914;
+
+transition:.4s;
+
 }
 
-/* Text Input */
-.stTextInput input{
-background:#1F2937;
-color:white;
+.movie-card:hover{
+
+transform:translateY(-6px);
+
+}
+
+.rating{
+
+color:#FFD700;
+
+font-weight:bold;
+
+font-size:20px;
+
+}
+
+@keyframes fadeIn{
+
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0px);}
+
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- LOAD DATA ----------------
+# ---------------- Hero ---------------- #
 
-movies = pd.read_csv("movies.csv")
+st.markdown(st.markdown("""
+<style>
 
-# ---------------- TITLE ----------------
+/* ---------- Background ---------- */
+.stApp{
+background:
+radial-gradient(circle at top left,#3b0a45 0%,transparent 35%),
+radial-gradient(circle at top right,#0b4f6c 0%,transparent 35%),
+radial-gradient(circle at bottom,#111827 20%,#000000 90%);
+background-attachment:fixed;
+color:white;
+}
 
-st.title("🎬 Movie Recommendation System")
+/* Hide Streamlit header */
+header{visibility:hidden;}
 
-st.markdown(
-"""
-Find your next favorite movie based on **language, genre, release year and IMDb rating.**
-"""
-)
+/* Main container */
+.block-container{
+padding-top:2rem;
+padding-bottom:2rem;
+max-width:1200px;
+}
 
-st.divider()
+/* Title */
+h1{
+text-align:center;
+font-size:56px !important;
+font-weight:900 !important;
+color:white;
+letter-spacing:1px;
+text-shadow:0px 0px 25px rgba(255,0,100,.6);
+}
 
-# ---------------- STATS ----------------
+/* Subtitle */
+.subtitle{
+text-align:center;
+font-size:20px;
+color:#dddddd;
+margin-bottom:35px;
+}
 
-col1, col2, col3 = st.columns(3)
+/* Metric Cards */
 
-col1.metric("🎬 Total Movies", len(movies))
-col2.metric("🎭 Genres", movies["Genre"].nunique())
-col3.metric("🌍 Languages", movies["Language"].nunique())
+[data-testid="metric-container"]{
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(18px);
+border-radius:20px;
+padding:20px;
+border:1px solid rgba(255,255,255,.1);
+box-shadow:0px 10px 35px rgba(0,0,0,.45);
+transition:.3s;
+}
 
-st.divider()
+[data-testid="metric-container"]:hover{
+transform:translateY(-6px);
+box-shadow:0px 15px 45px rgba(255,0,100,.35);
+}
 
-# ---------------- SEARCH ----------------
+/* Input Boxes */
 
-search = st.text_input("🔍 Search Movie")
+.stSelectbox div[data-baseweb="select"]>div,
+.stTextInput input{
+background:rgba(255,255,255,.08);
+border-radius:15px;
+border:1px solid rgba(255,255,255,.15);
+}
 
-if search:
+/* Slider */
 
-    result = movies[
-        movies["Movie"].str.contains(search, case=False, na=False)
-    ]
+.stSlider>div>div>div>div{
+background:#ff1744;
+}
 
-    if len(result):
+/* Button */
 
-        st.subheader("Search Results")
+.stButton>button{
+width:100%;
+height:60px;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+background:linear-gradient(90deg,#ff1744,#ff9100);
+color:white;
+border:none;
+transition:.35s;
+box-shadow:0px 8px 25px rgba(255,0,80,.45);
+}
 
-        st.dataframe(
-            result[
-                ["Movie","Genre","Language","Year","IMDb_Rating"]
-            ],
-            use_container_width=True
-        )
+.stButton>button:hover{
+transform:scale(1.04);
+background:linear-gradient(90deg,#ff4081,#ffc107);
+box-shadow:0px 15px 40px rgba(255,0,80,.6);
+}
 
-    else:
-        st.warning("Movie not found.")
+/* Movie Cards */
 
-st.divider()
+.movie-card{
+background:rgba(255,255,255,.08);
+backdrop-filter:blur(15px);
+padding:22px;
+border-radius:18px;
+margin-bottom:18px;
+border-left:6px solid #ff1744;
+box-shadow:0px 10px 35px rgba(0,0,0,.45);
+transition:.3s;
+}
 
-# ---------------- FILTERS ----------------
+.movie-card:hover{
+transform:translateY(-6px);
+box-shadow:0px 15px 45px rgba(255,0,100,.45);
+}
 
-language = st.selectbox(
-    "🌍 Select Language",
-    sorted(movies["Language"].unique())
-)
+/* Scrollbar */
 
-genre = st.selectbox(
-    "🎭 Select Genre",
-    sorted(movies["Genre"].unique())
-)
+::-webkit-scrollbar{
+width:10px;
+}
 
-year_range = st.slider(
-    "📅 Select Release Year",
-    int(movies["Year"].min()),
-    int(movies["Year"].max()),
-    (
-        int(movies["Year"].min()),
-        int(movies["Year"].max())
-    )
-)
+::-webkit-scrollbar-thumb{
+background:#ff1744;
+border-radius:20px;
+}
 
-rating = st.slider(
-    "⭐ Minimum IMDb Rating",
-    0.0,
-    10.0,
-    7.0,
-    0.1
-)
+::-webkit-scrollbar-track{
+background:#111;
+}
 
-recommendations = st.slider(
-    "🎥 Number of Recommendations",
-    1,
-    20,
-    10
-)
+</style>
+""", unsafe_allow_html=True))
+
+# ---------------- Stats ---------------- #
+
+c1,c2,c3=st.columns(3)
+
+with c1:
+    st.markdown(f"""
+    <div class='metric-card'>
+    <h2>🎬</h2>
+    <h1>{len(movies)}</h1>
+    <p>Total Movies</p>
+    </div>
+    """,unsafe_allow_html=True)
+
+with c2:
+    st.markdown(f"""
+    <div class='metric-card'>
+    <h2>🎭</h2>
+    <h1>{movies['Genre'].nunique()}</h1>
+    <p>Genres</p>
+    </div>
+    """,unsafe_allow_html=True)
+
+with c3:
+    st.markdown(f"""
+    <div class='metric-card'>
+    <h2>🌍</h2>
+    <h1>{movies['Language'].nunique()}</h1>
+    <p>Languages</p>
+    </div>
+    """,unsafe_allow_html=True)
 
 st.write("")
-
-# ---------------- BUTTON ----------------
-
-if st.button("🍿 Recommend Movies"):
-
-    filtered = movies[
-
-        (movies["Language"] == language)
-
-        &
-
-        (movies["Genre"] == genre)
-
-        &
-
-        (movies["Year"] >= year_range[0])
-
-        &
-
-        (movies["Year"] <= year_range[1])
-
-        &
-
-        (movies["IMDb_Rating"] >= rating)
-
-    ]
-
-    if len(filtered)==0:
-
-        st.error("❌ No movies found. Try changing filters.")
-
-    else:
-
-        if len(filtered) > recommendations:
-
-            filtered = filtered.sample(recommendations)
-
-        st.success(f"Found {len(filtered)} movie(s)")
-
-        st.write("")
-
-        for _, row in filtered.iterrows():
-
-            st.markdown(f"""
-### 🎬 {row['Movie']}
-
-**🎭 Genre:** {row['Genre']}
-
-**🌍 Language:** {row['Language']}
-
-**📅 Year:** {row['Year']}
-
-**⭐ IMDb:** {row['IMDb_Rating']}
-
----
-""")
-
-st.divider()
-
-st.caption("Made with ❤️ using Python, Pandas and Streamlit")
+st.write("")

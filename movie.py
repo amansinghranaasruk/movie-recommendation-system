@@ -1,36 +1,191 @@
 import streamlit as st
 import pandas as pd
-import random
+
+# ---------------- PAGE ----------------
 
 st.set_page_config(
-    page_title="Netflix Style Movie Recommender",
+    page_title="Movie Recommendation System",
     page_icon="🎬",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
-# Load data
-movies = pd.read_csv("movies.csv")
-
-# ---------------- CSS ---------------- #
+# ---------------- CSS ----------------
 
 st.markdown("""
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-
-html, body, [class*="css"]{
-    font-family:'Poppins',sans-serif;
+.stApp{
+background:linear-gradient(rgba(8,8,8,.90),rgba(8,8,8,.92)),
+url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80");
+background-size:cover;
+background-attachment:fixed;
+color:white;
 }
 
-/* Background */
-.stApp{
-background:
-linear-gradient(
-135deg,
-#090909,
-#141414,
-#1b1b1b,
+h1{
+text-align:center;
+font-size:60px;
+color:white;
+}
+
+.big{
+text-align:center;
+font-size:22px;
+color:#dddddd;
+margin-bottom:25px;
+}
+
+[data-testid="metric-container"]{
+background:#151515;
+border-radius:15px;
+padding:20px;
+border:1px solid #333;
+}
+
+.stButton>button{
+background:#E50914;
+color:white;
+font-size:20px;
+font-weight:bold;
+width:100%;
+height:55px;
+border:none;
+border-radius:10px;
+}
+
+.stButton>button:hover{
+background:#ff3030;
+}
+
+.movie{
+background:#1b1b1b;
+padding:20px;
+border-radius:15px;
+margin-bottom:15px;
+border-left:5px solid red;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- DATA ----------------
+
+movies = pd.read_csv("movies.csv")
+
+# ---------------- TITLE ----------------
+
+st.markdown("<h1>🎬 Movie Recommendation System</h1>", unsafe_allow_html=True)
+
+st.markdown(
+"<p class='big'>Find your next favourite movie from 500+ movies.</p>",
+unsafe_allow_html=True)
+
+# ---------------- METRICS ----------------
+
+c1,c2,c3,c4=st.columns(4)
+
+c1.metric("🎞 Movies",len(movies))
+c2.metric("🎭 Genres",movies["Genre"].nunique())
+c3.metric("🌍 Languages",movies["Language"].nunique())
+c4.metric("⭐ Avg IMDb",round(movies["IMDb"].mean(),1))
+
+st.divider()
+
+# ---------------- SEARCH ----------------
+
+search=st.text_input("🔍 Search Movie")
+
+if search:
+
+    result=movies[movies["Movie"].str.contains(search,case=False)]
+
+    if len(result):
+
+        st.success(f"{len(result)} movie found")
+
+        st.dataframe(result,use_container_width=True)
+
+st.divider()
+
+# ---------------- FILTERS ----------------
+
+col1,col2,col3=st.columns(3)
+
+with col1:
+    language=st.selectbox(
+        "Language",
+        sorted(movies["Language"].unique())
+    )
+
+with col2:
+    genre=st.selectbox(
+        "Genre",
+        sorted(movies["Genre"].unique())
+    )
+
+with col3:
+    rating=st.slider(
+        "Minimum IMDb",
+        0.0,
+        10.0,
+        7.0,
+        0.1
+    )
+
+year=st.slider(
+    "Release Year",
+    int(movies["Year"].min()),
+    int(movies["Year"].max()),
+    (
+        int(movies["Year"].min()),
+        int(movies["Year"].max())
+    )
+)
+
+count=st.slider(
+    "Number of Recommendations",
+    1,
+    20,
+    10
+)
+
+# ---------------- BUTTON ----------------
+
+if st.button("🍿 Recommend Movies"):
+
+    result=movies[
+        (movies["Language"]==language)&
+        (movies["Genre"]==genre)&
+        (movies["IMDb"]>=rating)&
+        (movies["Year"]>=year[0])&
+        (movies["Year"]<=year[1])
+    ]
+
+    if len(result)==0:
+
+        st.warning("No movies found.")
+
+    else:
+
+        st.subheader("🎬 Recommended Movies")
+
+        for _,row in result.head(count).iterrows():
+
+            st.markdown(f"""
+<div class="movie">
+
+## 🎥 {row['Movie']}
+
+⭐ IMDb : **{row['IMDb']}**
+
+🎭 Genre : **{row['Genre']}**
+
+🌍 Language : **{row['Language']}**
+
+📅 Year : **{row['Year']}**
+
+</div>
+""",unsafe_allow_html=True)
 #101820
 );
 color:white;

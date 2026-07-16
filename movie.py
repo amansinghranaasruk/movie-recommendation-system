@@ -1,113 +1,176 @@
 import streamlit as st
 import pandas as pd
 
-# -------------------------
-# Page Settings
-# -------------------------
+# ---------------- PAGE CONFIG ---------------- #
+
 st.set_page_config(
     page_title="Movie Recommendation System",
     page_icon="🎬",
     layout="wide"
 )
 
-# -------------------------
-# Load Data
-# -------------------------
-movies = pd.read_csv("movies.csv")
+# ---------------- LOAD DATA ---------------- #
 
-# -------------------------
-# Title
-# -------------------------
+try:
+    movies = pd.read_csv("movies.csv")
+except FileNotFoundError:
+    st.error("movies.csv not found!")
+    st.stop()
+
+# ---------------- TITLE ---------------- #
+
 st.title("🎬 Movie Recommendation System")
-st.write("Find your next favorite movie!")
+
+st.write(
+    "Find your next favorite movie based on language, genre, year and IMDb rating."
+)
 
 st.divider()
 
-# -------------------------
-# Statistics
-# -------------------------
+# ---------------- DASHBOARD ---------------- #
+
 col1, col2, col3 = st.columns(3)
 
-col1.metric("🎥 Movies", len(movies))
-col2.metric("🎭 Genres", movies["Genre"].nunique())
-col3.metric("🌍 Languages", movies["Language"].nunique())
+with col1:
+    st.metric("🎬 Total Movies", len(movies))
+
+with col2:
+    st.metric("🎭 Genres", movies["Genre"].nunique())
+
+with col3:
+    st.metric("🌍 Languages", movies["Language"].nunique())
 
 st.divider()
 
-# -------------------------
-# Search
-# -------------------------
+# ---------------- SEARCH ---------------- #
+
 search = st.text_input("🔍 Search Movie")
 
 if search:
-    result = movies[movies["Movie"].str.contains(search, case=False)]
+    result = movies[
+        movies["Movie"].str.contains(search, case=False, na=False)
+    ]
 
-    if len(result) > 0:
-        st.dataframe(result, use_container_width=True)
-    else:
+    if result.empty:
         st.warning("Movie not found.")
+    else:
+        st.dataframe(result)
 
 st.divider()
 
-# -------------------------
-# Filters
-# -------------------------
+# ---------------- FILTERS ---------------- #
+
 language = st.selectbox(
-    "Select Language",
+    "🌍 Select Language",
     sorted(movies["Language"].unique())
 )
 
 genre = st.selectbox(
-    "Select Genre",
+    "🎭 Select Genre",
     sorted(movies["Genre"].unique())
 )
 
-year = st.slider(
-    "Select Release Year",
+start_year, end_year = st.slider(
+    "📅 Select Release Year",
     int(movies["Year"].min()),
     int(movies["Year"].max()),
-    int(movies["Year"].min())
+    (
+        int(movies["Year"].min()),
+        int(movies["Year"].max())
+    )
 )
 
-rating = st.slider(
-    "Minimum IMDb Rating",
-    0.0,
-    10.0,
-    7.0,
-    0.1
-)
-
-count = st.slider(
-    "Number of Recommendations",
+num_movies = st.slider(
+    "🎬 Number of Recommendations",
     1,
-    20,
-    10
+    10,
+    5
 )
 
-# -------------------------
-# Recommend Button
-# -------------------------
-if st.button("🍿 Recommend Movies"):
+sort_option = st.selectbox(
+    "📊 Sort By",
+    [
+        "Highest Rated",
+        "Newest",
+        "Random"
+    ]
+)
 
-    recommendations = movies[
-        (movies["Language"] == language) &
-        (movies["Genre"] == genre) &
-        (movies["Year"] >= year) &
-        (movies["IMDb"] >= rating)
+st.divider()
+
+# ---------------- SURPRISE ME ---------------- #
+
+if st.button("🎲 Surprise Me"):
+
+    movie = movies.sample(1).iloc[0]
+
+    st.success("Here's a random movie for you!")
+
+    st.subheader(movie["Movie"])
+
+    st.write(f"⭐ IMDb Rating: {movie['IMDb_Rating']}")
+    st.write(f"📅 Year: {movie['Year']}")
+    st.write(f"🎭 Genre: {movie['Genre']}")
+    st.write(f"🌍 Language: {movie['Language']}")
+
+st.divider()
+
+# ---------------- RECOMMEND ---------------- #
+
+if st.button("🎥 Recommend Movies"):
+
+    filtered = movies[
+        (movies["Language"] == language)
+        &
+        (movies["Genre"] == genre)
+        &
+        (movies["Year"] >= start_year)
+        &
+        (movies["Year"] <= end_year)
     ]
 
-    if recommendations.empty:
-        st.warning("No movies found.")
+    if filtered.empty:
+
+        st.warning("❌ No movies found. Try changing the filters.")
+
     else:
-        st.success(f"Found {len(recommendations)} movies")
 
-        for _, row in recommendations.head(count).iterrows():
+        if sort_option == "Highest Rated":
 
-            st.markdown("---")
+            recommendations = filtered.sort_values(
+                by="IMDb_Rating",
+                ascending=False
+            ).head(num_movies)
 
-            st.subheader(row["Movie"])
+        elif sort_option == "Newest":
 
-            st.write(f"⭐ IMDb : {row['IMDb']}")
-            st.write(f"🎭 Genre : {row['Genre']}")
-            st.write(f"🌍 Language : {row['Language']}")
-            st.write(f"📅 Year : {row['Year']}")
+            recommendations = filtered.sort_values(
+                by="Year",
+                ascending=False
+            ).head(num_movies)
+
+        else:
+
+            recommendations = filtered.sample(
+                min(num_movies, len(filtered))
+            )
+
+        st.success(f"Found {len(recommendations)} movie(s)!")
+
+        for _, row in recommendations.iterrows():
+
+            with st.container():
+
+                st.subheader(f"🎬 {row['Movie']}")
+
+                c1, c2 = st.columns(2)
+
+                with c1:
+                    st.write(f"⭐ **IMDb Rating:** {row['IMDb_Rating']}")
+                    st.write(f"📅 **Release Year:** {row['Year']}")
+
+                with c2:
+                    st.write(f"🎭 **Genre:** {row['Genre']}")
+                    st.write(f"🌍 **Language:** {row['Language']}")
+
+                st.divider()

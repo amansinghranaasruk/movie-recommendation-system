@@ -187,7 +187,7 @@ if st.button("🍿 Recommend Movies"):
 </div>
 """,unsafe_allow_html=True)
 #101820
-)
+))
 color:white;
 }
 
